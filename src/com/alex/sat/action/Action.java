@@ -26,6 +26,7 @@ public class Action
 		ArrayList<CDR> cdrList = new ArrayList<CDR>();
 		SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss:SSS");
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/YYYY");
+		SimpleDateFormat secondFormat = new SimpleDateFormat("ss");
 		
 		/**
 		 * Timezone
@@ -64,21 +65,23 @@ public class Action
 					tampon = new BufferedReader(fileReader);
 					String inputLine = new String(); 
 					
-					Integer startTimeIndex, endTimeIndex, callingNumerIndex, calledNumberIndex, callingNameIndex, calledNameIndex;
+					Integer startTimeIndex, endTimeIndex, callingNumerIndex, calledNumberIndex, callingNameIndex, calledNameIndex, ccmIDIndex;
 					startTimeIndex = null;
 					endTimeIndex = null;
 					callingNumerIndex = null;
 					calledNumberIndex = null;
 					callingNameIndex = null;
 					calledNameIndex = null;
+					ccmIDIndex = null;
 							
-					String startTimeString, endTimeString, callingNumerString, calledNumberString, callingNameString, calledNameString; 
+					String startTimeString, endTimeString, callingNumerString, calledNumberString, callingNameString, calledNameString, ccmIDString; 
 					startTimeString = UsefulMethod.getTargetOption("starttime");
 					endTimeString = UsefulMethod.getTargetOption("endtime");
 					callingNumerString = UsefulMethod.getTargetOption("callingnumber");
 					calledNumberString = UsefulMethod.getTargetOption("callednumber");
 					callingNameString = UsefulMethod.getTargetOption("callingname");
 					calledNameString = UsefulMethod.getTargetOption("calledname");
+					ccmIDString = UsefulMethod.getTargetOption("ccmid");
 					
 					boolean firstline = true;
 					int index = 1;
@@ -105,6 +108,7 @@ public class Action
 								else if(firstLine[i].equals(calledNumberString))calledNumberIndex = i;
 								else if(firstLine[i].equals(callingNameString))callingNameIndex = i;
 								else if(firstLine[i].equals(calledNameString))calledNameIndex = i;
+								else if(firstLine[i].equals(ccmIDString))ccmIDIndex = i;
 								}
 							
 							if((startTimeIndex == null) ||
@@ -112,7 +116,8 @@ public class Action
 									(callingNumerIndex == null) ||
 									(calledNumberIndex == null) ||
 									(callingNameIndex == null) ||
-									(calledNameIndex == null))
+									(calledNameIndex == null) ||
+									(ccmIDIndex == null))
 								{
 								Variables.getLogger().error("ERROR : One or more value was not found : exit");
 								System.exit(0);
@@ -135,7 +140,8 @@ public class Action
 									values[callingNumerIndex],
 									values[calledNumberIndex],
 									values[callingNameIndex],
-									values[calledNameIndex]);
+									values[calledNameIndex],
+									values[ccmIDIndex]);
 							
 							if(cdr.getStartTime().getTime() != 0)cdrList.add(cdr);
 							index++;
@@ -179,13 +185,23 @@ public class Action
 		
 		for(CDR cdr : cdrList)
 			{
-			if(cdr.getCalledName().contains("@") || cdr.getCallingName().contains("@"))
+			if(cdr.getCcmID().contains("2"))
 				{
-				if(cdr.getCalledName().toLowerCase().contains("fr") || cdr.getCallingName().toLowerCase().contains("fr"))
+				tempList.add(cdr);
+				}
+			/*
+			if(cdr.getCalledName().contains("SIP_TRK_SFR") || cdr.getCallingName().contains("SIP_TRK_SFR"))//Keeps only gateways
+				{
+				tempList.add(cdr);
+				}*/
+			/*
+			if(cdr.getCalledName().contains("@") || cdr.getCallingName().contains("@"))//Keeps only gateways
+				{
+				if(cdr.getCalledName().contains("DS1-0@gw2921") || cdr.getCallingName().contains("DS1-0@gw2921"))
 					{
 					tempList.add(cdr);
 					}
-				}
+				}*/
 			}
 		
 		cdrList = tempList;//To free up memory
@@ -263,7 +279,12 @@ public class Action
 				{
 				maxConcurrentcalls = currentCalls.size();
 				startTime = currentCalls.get(0).getStartTime();
-				endTime = currentCalls.get(currentCalls.size()-1).getEndTime();
+				endTime = currentCalls.get(0).getEndTime();
+				for(CDR cc : currentCalls)//Then we find the real end time
+					{
+					if(cc.getEndTime().compareTo(endTime) > 0)endTime=cc.getEndTime();
+					}
+				
 				currentCallsLog.clear();
 				currentCallsLog.addAll(currentCalls);
 				}
@@ -272,6 +293,50 @@ public class Action
 		Variables.getLogger().info("Max concurrent calls found : "+maxConcurrentcalls);
 		Variables.getLogger().info("Between "+timeFormat.format(startTime)+" and "+timeFormat.format(endTime)+" , date "+dateFormat.format(startTime));
 		Variables.getLogger().debug("Max concurrent calls detail : ");
+		for(CDR cdr : currentCallsLog)
+			{
+			Variables.getLogger().debug(timeFormat.format(cdr.getStartTime())+" to "+timeFormat.format(cdr.getEndTime()));
+			}
+		
+		/******
+		 * 6 : Calculation of the max concurrent calls the same second
+		 * 
+		 * Should be improved to consider starting calls and ending calls the same second
+		 * 
+		 * In addition gives the time shift when it happens
+		 */
+		int maxCallPerSecond = 0;
+		currentCalls = new ArrayList<CDR>();
+		currentCallsLog = new ArrayList<CDR>();
+		
+		for(CDR cdr : cdrList)
+			{
+			if(currentCalls.size() == 0)
+				{
+				currentCalls.add(cdr);
+				}
+			else
+				{
+				if(secondFormat.format(cdr.getStartTime()).equals(secondFormat.format(currentCalls.get(0).getStartTime())))
+					{
+					currentCalls.add(cdr);
+					}
+				else
+					{
+					currentCalls.clear();
+					}
+				}
+			
+			if(currentCalls.size()>maxCallPerSecond)
+				{
+				maxCallPerSecond = currentCalls.size();
+				startTime = currentCalls.get(0).getStartTime();
+				currentCallsLog.clear();
+				currentCallsLog.addAll(currentCalls);
+				}
+			}
+		Variables.getLogger().debug("Max calls per second found : "+maxCallPerSecond);
+		Variables.getLogger().info("At "+timeFormat.format(startTime)+" , date "+dateFormat.format(startTime));
 		for(CDR cdr : currentCallsLog)
 			{
 			Variables.getLogger().debug(timeFormat.format(cdr.getStartTime())+" to "+timeFormat.format(cdr.getEndTime()));

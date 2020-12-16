@@ -13,10 +13,10 @@ public class CDR
 	 * Variables
 	 */
 	private Date startTime, endTime;
-	private String callingNumber, calledNumber, callingName, calledName;
+	private String callingNumber, calledNumber, callingName, calledName, ccmID;
 	
 	public CDR(Date startTime, Date endTime, String callingNumber, String calledNumber, String callingName,
-			String calledName)
+			String calledName, String ccmID)
 		{
 		super();
 		this.startTime = startTime;
@@ -25,6 +25,7 @@ public class CDR
 		this.calledNumber = calledNumber;
 		this.callingName = callingName;
 		this.calledName = calledName;
+		this.ccmID = ccmID;
 		}
 
 	public Date getStartTime()
@@ -56,6 +57,13 @@ public class CDR
 		{
 		return calledName;
 		}
+
+	public String getCcmID()
+		{
+		return ccmID;
+		}
+	
+	
 	
 	/*2020*//*RATEL Alexandre 8)*/
 	}
