@@ -302,6 +302,7 @@ public class Action
 		 * 6 : Calculation of the max concurrent calls the same second
 		 * 
 		 * Should be improved to consider starting calls and ending calls the same second
+		 * At the moment we just process the starting time
 		 * 
 		 * In addition gives the time shift when it happens
 		 */

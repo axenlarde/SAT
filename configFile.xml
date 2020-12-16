@@ -17,7 +17,7 @@ Overal configuration file
 		<callednumber>originalCalledPartyNumber</callednumber>
 		<callingname>origDeviceName</callingname>
 		<calledname>destDeviceName</calledname>
-		<ccmid>globalCallID_callManagerId</ccmid>
+		<ccmid>globalCallID_callManagerId</ccmid><!--To filter by the cucm node ID-->
 		<!--CDR Server parameters-->
 		<cdrhost>10.0.1.172</cdrhost><!--IP of the CUCM server-->
 		<cdrport>8443</cdrport><!--Port to contact the CUCM server using CDR-->

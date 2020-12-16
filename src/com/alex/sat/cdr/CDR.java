@@ -3,7 +3,7 @@ package com.alex.sat.cdr;
 import java.util.Date;
 
 /**
- * A CDR (Call Detail record)
+ * A CUCM CDR (Call Detail record)
  *
  * @author Alexandre RATEL
  */
