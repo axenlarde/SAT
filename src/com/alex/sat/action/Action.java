@@ -183,17 +183,37 @@ public class Action
 		Variables.getLogger().debug("We keep only filterd values");
 		ArrayList<CDR> tempList = new ArrayList<CDR>();
 		
+		String filter = "CiscoUM";
+		
 		for(CDR cdr : cdrList)
 			{
+			//tempList.add(cdr);
+			/*
 			if(cdr.getCcmID().contains("2"))
 				{
 				tempList.add(cdr);
-				}
+				}*/
+			
 			/*
-			if(cdr.getCalledName().contains("SIP_TRK_SFR") || cdr.getCallingName().contains("SIP_TRK_SFR"))//Keeps only gateways
+			if(cdr.getCalledNumber().startsWith(filter) || cdr.getCallingNumber().startsWith(filter))
+				{
+				if(cdr.getCalledName().startsWith("CNAF-")
+						|| cdr.getCallingName().startsWith("CNAF-")
+						|| cdr.getCallingName().startsWith("SIP_TRK_SFR")
+						|| cdr.getCalledName().startsWith("SIP_TRK_SFR"))
+					{
+					tempList.add(cdr);
+					}
+				else
+					{
+					//Nothing
+					}
+				}*/
+			
+			if(cdr.getCalledName().startsWith(filter) || cdr.getCallingName().startsWith(filter))
 				{
 				tempList.add(cdr);
-				}*/
+				}
 			/*
 			if(cdr.getCalledName().contains("@") || cdr.getCallingName().contains("@"))//Keeps only gateways
 				{
@@ -208,6 +228,27 @@ public class Action
 		System.gc();//Just to be sure
 		Variables.getLogger().info("Filtered !");
 		Variables.getLogger().debug(cdrList.size()+" CDR remaining");
+		
+		/*
+		Variables.getLogger().info(cdrList.get(100).getCallingName()+" -> "+cdrList.get(100).getCalledName());
+		Variables.getLogger().info(cdrList.get(1000).getCallingName()+" -> "+cdrList.get(1000).getCalledName());
+		Variables.getLogger().info(cdrList.get(2000).getCallingName()+" -> "+cdrList.get(2000).getCalledName());
+		*/
+		/*
+		ArrayList<String> deviceList = new ArrayList<String>();
+		for(CDR cdr : cdrList)
+			{
+			if((!deviceList.contains(cdr.getCalledName())) && (cdr.getCalledName().startsWith(filter)))
+				{
+				deviceList.add(cdr.getCalledName());
+				}
+			else if((!deviceList.contains(cdr.getCallingName())) && (cdr.getCallingName().startsWith(filter)))
+				{
+				deviceList.add(cdr.getCallingName());
+				}
+			}
+		Variables.getLogger().info(deviceList.size()+" Filtered device found");
+		for(String s : deviceList)Variables.getLogger().info(s);*/
 		
 		
 		/******
@@ -292,11 +333,13 @@ public class Action
 		
 		Variables.getLogger().info("Max concurrent calls found : "+maxConcurrentcalls);
 		Variables.getLogger().info("Between "+timeFormat.format(startTime)+" and "+timeFormat.format(endTime)+" , date "+dateFormat.format(startTime));
-		Variables.getLogger().debug("Max concurrent calls detail : ");
+		
+		/*Variables.getLogger().debug("Max concurrent calls detail : ");
+		
 		for(CDR cdr : currentCallsLog)
 			{
 			Variables.getLogger().debug(timeFormat.format(cdr.getStartTime())+" to "+timeFormat.format(cdr.getEndTime()));
-			}
+			}*/
 		
 		/******
 		 * 6 : Calculation of the max concurrent calls the same second
