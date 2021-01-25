@@ -197,16 +197,17 @@ public class Action
 		Variables.getLogger().debug("We keep only filterd values");
 		ArrayList<CDR> tempList = new ArrayList<CDR>();
 		
-		String filter = "CiscoUM";
+		String filter = "UCCX_";
 		
 		for(CDR cdr : cdrList)
 			{
 			//tempList.add(cdr);
 			
+			/*
 			if(cdr.getCcmID().contains("2"))
 				{
 				tempList.add(cdr);
-				}
+				}*/
 			
 			/*
 			if(cdr.getCalledNumber().startsWith(filter) || cdr.getCallingNumber().startsWith(filter))
@@ -223,11 +224,11 @@ public class Action
 					//Nothing
 					}
 				}*/
-			/*
+			
 			if(cdr.getCalledName().startsWith(filter) || cdr.getCallingName().startsWith(filter))
 				{
 				tempList.add(cdr);
-				}*/
+				}
 			/*
 			if(cdr.getCalledName().contains("@") || cdr.getCallingName().contains("@"))//Keeps only gateways
 				{
@@ -399,6 +400,38 @@ public class Action
 			{
 			Variables.getLogger().debug(timeFormat.format(cdr.getStartTime())+" to "+timeFormat.format(cdr.getEndTime()));
 			}
+		
+		/******
+		 * 7 : Calculation of the max call per day
+		 * 
+		 * Will give the date of the day with the most call
+		 */
+		currentCalls = new ArrayList<CDR>();
+		int maxCalls = 0;
+		Date mostCallDay = new Date();
+		
+		for(CDR cdr : cdrList)
+			{
+			if(currentCalls.size() == 0)currentCalls.add(cdr);
+			else
+				{
+				if(dateFormat.format(cdr.getStartTime()).equals(dateFormat.format(currentCalls.get(0).getStartTime())))
+					{
+					currentCalls.add(cdr);
+					}
+				else
+					{
+					if(currentCalls.size() > maxCalls)
+						{
+						maxCalls = currentCalls.size();
+						mostCallDay = currentCalls.get(0).getStartTime();
+						}
+					currentCalls.clear();
+					currentCalls.add(cdr);
+					}
+				}
+			}
+		Variables.getLogger().debug("Max call the same day "+maxCalls+", the "+dateFormat.format(mostCallDay));
 		}
 	
 	
