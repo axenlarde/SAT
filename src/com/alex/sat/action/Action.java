@@ -54,6 +54,7 @@ public class Action
 			ArrayList<File> fileList = UsefulMethod.getFilesToProcess(Variables.getSourceDirectory());
 			
 			String splitter = UsefulMethod.getTargetOption("csvsplitter");
+			boolean keepZeroDuration = Boolean.parseBoolean(UsefulMethod.getTargetOption("keepzeroduration"));
 			
 			FileReader fileReader= null;
 			BufferedReader tampon  = null;
@@ -65,7 +66,7 @@ public class Action
 					tampon = new BufferedReader(fileReader);
 					String inputLine = new String(); 
 					
-					Integer startTimeIndex, endTimeIndex, callingNumerIndex, calledNumberIndex, callingNameIndex, calledNameIndex, ccmIDIndex;
+					Integer startTimeIndex, endTimeIndex, callingNumerIndex, calledNumberIndex, callingNameIndex, calledNameIndex, ccmIDIndex, durationIndex;
 					startTimeIndex = null;
 					endTimeIndex = null;
 					callingNumerIndex = null;
@@ -73,8 +74,9 @@ public class Action
 					callingNameIndex = null;
 					calledNameIndex = null;
 					ccmIDIndex = null;
+					durationIndex = null;
 							
-					String startTimeString, endTimeString, callingNumerString, calledNumberString, callingNameString, calledNameString, ccmIDString; 
+					String startTimeString, endTimeString, callingNumerString, calledNumberString, callingNameString, calledNameString, ccmIDString, durationString; 
 					startTimeString = UsefulMethod.getTargetOption("starttime");
 					endTimeString = UsefulMethod.getTargetOption("endtime");
 					callingNumerString = UsefulMethod.getTargetOption("callingnumber");
@@ -82,6 +84,7 @@ public class Action
 					callingNameString = UsefulMethod.getTargetOption("callingname");
 					calledNameString = UsefulMethod.getTargetOption("calledname");
 					ccmIDString = UsefulMethod.getTargetOption("ccmid");
+					durationString = UsefulMethod.getTargetOption("duration");
 					
 					boolean firstline = true;
 					int index = 1;
@@ -109,6 +112,7 @@ public class Action
 								else if(firstLine[i].equals(callingNameString))callingNameIndex = i;
 								else if(firstLine[i].equals(calledNameString))calledNameIndex = i;
 								else if(firstLine[i].equals(ccmIDString))ccmIDIndex = i;
+								else if(firstLine[i].equals(durationString))durationIndex = i;
 								}
 							
 							if((startTimeIndex == null) ||
@@ -117,7 +121,8 @@ public class Action
 									(calledNumberIndex == null) ||
 									(callingNameIndex == null) ||
 									(calledNameIndex == null) ||
-									(ccmIDIndex == null))
+									(ccmIDIndex == null) ||
+									(durationIndex == null))
 								{
 								Variables.getLogger().error("ERROR : One or more value was not found : exit");
 								System.exit(0);
@@ -141,9 +146,18 @@ public class Action
 									values[calledNumberIndex],
 									values[callingNameIndex],
 									values[calledNameIndex],
-									values[ccmIDIndex]);
+									values[ccmIDIndex],
+									Integer.parseInt(values[durationIndex]));
 							
-							if(cdr.getStartTime().getTime() != 0)cdrList.add(cdr);
+							//According to the keepZeroDuration parameters, we discard the zero duration
+							if(cdr.getDuration() == 0)
+								{
+								if(keepZeroDuration)cdrList.add(cdr);
+								}
+							else
+								{
+								cdrList.add(cdr);
+								}
 							index++;
 			        		}
 			         	}
@@ -188,11 +202,11 @@ public class Action
 		for(CDR cdr : cdrList)
 			{
 			//tempList.add(cdr);
-			/*
+			
 			if(cdr.getCcmID().contains("2"))
 				{
 				tempList.add(cdr);
-				}*/
+				}
 			
 			/*
 			if(cdr.getCalledNumber().startsWith(filter) || cdr.getCallingNumber().startsWith(filter))
@@ -209,11 +223,11 @@ public class Action
 					//Nothing
 					}
 				}*/
-			
+			/*
 			if(cdr.getCalledName().startsWith(filter) || cdr.getCallingName().startsWith(filter))
 				{
 				tempList.add(cdr);
-				}
+				}*/
 			/*
 			if(cdr.getCalledName().contains("@") || cdr.getCallingName().contains("@"))//Keeps only gateways
 				{

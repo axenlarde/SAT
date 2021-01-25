@@ -10,14 +10,16 @@ Overal configuration file
 		<allowedfiles>txt,csv</allowedfiles>
 		<sourcedirectory>Files</sourcedirectory>
 		<timezone>Europe/Paris</timezone>
+		<keepzeroduration>false</keepzeroduration>
 		<!--CDR matcher-->
-		<starttime>dateTimeConnect</starttime>
+		<starttime>dateTimeOrigination</starttime><!--dateTimeConnect-->
 		<endtime>dateTimeDisconnect</endtime>
 		<callingnumber>callingPartyNumber</callingnumber>
 		<callednumber>originalCalledPartyNumber</callednumber>
 		<callingname>origDeviceName</callingname>
 		<calledname>destDeviceName</calledname>
 		<ccmid>globalCallID_callManagerId</ccmid><!--To filter by the cucm node ID-->
+		<duration>duration</duration>
 		<!--CDR Server parameters-->
 		<cdrhost>10.0.1.172</cdrhost><!--IP of the CUCM server-->
 		<cdrport>8443</cdrport><!--Port to contact the CUCM server using CDR-->
