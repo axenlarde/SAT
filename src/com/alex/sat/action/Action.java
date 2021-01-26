@@ -23,9 +23,9 @@ public class Action
 	
 	public Action()
 		{
-		ArrayList<CDR> cdrListAscending = new ArrayList<CDR>();
-		ArrayList<CDR> cdrListDescending = new ArrayList<CDR>();
-		SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss:SSS");
+		ArrayList<CDR> cdrListByStartingTime = new ArrayList<CDR>();
+		ArrayList<CDR> cdrListByEndingTime = new ArrayList<CDR>();
+		SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/YYYY");
 		SimpleDateFormat secondFormat = new SimpleDateFormat("ss");
 		
@@ -153,11 +153,11 @@ public class Action
 							//According to the keepZeroDuration parameters, we discard the zero duration
 							if(cdr.getDuration() == 0)
 								{
-								if(keepZeroDuration)cdrListAscending.add(cdr);
+								if(keepZeroDuration)cdrListByStartingTime.add(cdr);
 								}
 							else
 								{
-								cdrListAscending.add(cdr);
+								cdrListByStartingTime.add(cdr);
 								}
 							index++;
 			        		}
@@ -190,7 +190,7 @@ public class Action
 			System.exit(0);
 			}
 		
-		Variables.getLogger().info("Found "+cdrListAscending.size()+" CDR to process");
+		Variables.getLogger().info("Found "+cdrListByStartingTime.size()+" CDR to process");
 		
 		/**
 		 * 3 : We filter the CDR on the given filter basis
@@ -200,15 +200,15 @@ public class Action
 		
 		String filter = "UCCX_";
 		
-		for(CDR cdr : cdrListAscending)
+		for(CDR cdr : cdrListByStartingTime)
 			{
-			tempList.add(cdr);
+			//tempList.add(cdr);
 			
-			/*
+			
 			if(cdr.getCcmID().contains("2"))
 				{
 				tempList.add(cdr);
-				}*/
+				}
 			
 			/*
 			if(cdr.getCalledNumber().startsWith(filter) || cdr.getCallingNumber().startsWith(filter))
@@ -240,10 +240,10 @@ public class Action
 				}*/
 			}
 		
-		cdrListAscending = tempList;//To free up memory
+		cdrListByStartingTime = tempList;//To free up memory
 		System.gc();//Just to be sure
 		Variables.getLogger().info("Filtered !");
-		Variables.getLogger().debug(cdrListAscending.size()+" CDR remaining");
+		Variables.getLogger().debug(cdrListByStartingTime.size()+" CDR remaining");
 		
 		/*
 		Variables.getLogger().info(cdrList.get(100).getCallingName()+" -> "+cdrList.get(100).getCalledName());
@@ -270,7 +270,6 @@ public class Action
 		/******
 		 * 4 : Sort by start time and end time
 		 */
-		int maxConcurrentcalls = 0;
 		ArrayList<CDR> sortedCDRList = new ArrayList<CDR>();
 		
 		//We sort the calls by start time ascending
@@ -278,9 +277,9 @@ public class Action
 		
 		int index = 1;
 		int lastPercent = 0;
-		for(CDR cdr : cdrListAscending)
+		for(CDR cdr : cdrListByStartingTime)
 			{
-			float percent = (float)index/(float)cdrListAscending.size()*(float)100;
+			float percent = (float)index/(float)cdrListByStartingTime.size()*(float)100;
 			if((int)percent>lastPercent)
 				{
 				lastPercent = (int)percent;
@@ -312,21 +311,20 @@ public class Action
 			}
 		Variables.getLogger().debug("Ascending Sorted !");
 		
-		cdrListAscending = sortedCDRList;//We place the sorted result in the original list
+		cdrListByStartingTime = sortedCDRList;//We place the sorted result in the original list
 		sortedCDRList = null;//To free up memory
 		System.gc();//Just to be sure
 		
-		maxConcurrentcalls = 0;
 		sortedCDRList = new ArrayList<CDR>();
 		
-		//We sort the calls by start time ascending
+		//We sort the calls by start time descending
 		Variables.getLogger().debug("Sorting the CDR by end time");
 		
 		index = 1;
 		lastPercent = 0;
-		for(CDR cdr : cdrListAscending)
+		for(CDR cdr : cdrListByStartingTime)
 			{
-			float percent = (float)index/(float)cdrListAscending.size()*(float)100;
+			float percent = (float)index/(float)cdrListByStartingTime.size()*(float)100;
 			if((int)percent>lastPercent)
 				{
 				lastPercent = (int)percent;
@@ -358,7 +356,7 @@ public class Action
 			}
 		Variables.getLogger().debug("Descending Sorted !");
 		
-		cdrListDescending = sortedCDRList;//We place the sorted result in the original list
+		cdrListByEndingTime = sortedCDRList;//We place the sorted result in the original list
 		sortedCDRList = null;//To free up memory
 		System.gc();//Just to be sure
 		
@@ -368,12 +366,13 @@ public class Action
 		 * In addition gives the time shift when it happens
 		 */
 		Variables.getLogger().debug("Looking for the max concurrent calls");
+		int maxConcurrentcalls = 0;
 		ArrayList<CDR> currentCalls = new ArrayList<CDR>();
 		ArrayList<CDR> currentCallsLog = new ArrayList<CDR>();
 		Date startTime = new Date();
 		Date endTime = new Date();
 		
-		for(CDR cdr : cdrListAscending)
+		for(CDR cdr : cdrListByStartingTime)
 			{
 			currentCalls = removeStaleCalls(currentCalls, cdr);
 			currentCalls.add(cdr);
@@ -411,8 +410,6 @@ public class Action
 		 * 
 		 * In addition gives the time shift when it happens
 		 */
-		int maxCallStarting = 0;
-		int maxCallEnding = 0;
 		ArrayList<CDR> callsStarting = new ArrayList<CDR>();
 		ArrayList<CDR> callsEnding = new ArrayList<CDR>();
 		currentCalls = new ArrayList<CDR>();
@@ -420,9 +417,9 @@ public class Action
 		/***
 		 * First we get the number of calls starting the same second
 		 */
-		for(CDR cdr : cdrListAscending)
+		for(CDR cdr : cdrListByStartingTime)
 			{
-			if(callsStarting.size() == 0)callsStarting.add(cdr);
+			if(currentCalls.size() == 0)currentCalls.add(cdr);
 			else
 				{
 				if(secondFormat.format(cdr.getStartTime()).equals(secondFormat.format(currentCalls.get(0).getStartTime())))
@@ -431,9 +428,8 @@ public class Action
 					}
 				else
 					{
-					if(currentCalls.size() > maxCallStarting)
+					if(currentCalls.size() > callsStarting.size())
 						{
-						maxCallStarting = currentCalls.size();
 						callsStarting.clear();
 						callsStarting.addAll(currentCalls);
 						}
@@ -446,7 +442,7 @@ public class Action
 		 * Second we get the number of calls ending the same second
 		 */
 		currentCalls = new ArrayList<CDR>();
-		for(CDR cdr : cdrListDescending)
+		for(CDR cdr : cdrListByEndingTime)
 			{
 			if(currentCalls.size() == 0)currentCalls.add(cdr);
 			else
@@ -457,9 +453,8 @@ public class Action
 					}
 				else
 					{
-					if(currentCalls.size() > maxCallEnding)
+					if(currentCalls.size() > callsEnding.size())
 						{
-						maxCallEnding = currentCalls.size();
 						callsEnding.clear();
 						callsEnding.addAll(currentCalls);
 						}
@@ -469,50 +464,45 @@ public class Action
 				}
 			}
 		/***
-		 * Finally we compare then we complete the highest with its opposite
+		 * Finally we compare then we complement the highest with its opposite
 		 * 
 		 * So if the calls Ending the same second is higher, we look for the calls starting the same second
 		 * To get a really accurate value and vice versa
 		 * 
 		 * With this method we count a call starting and ending the same second as 1 call
 		 * I decided to count it as 2 call because it consume twice as much resource the same second
-		 */
-		if(maxCallEnding > maxCallStarting)
-			{
-			for(CDR cdr : cdrListAscending)
-				{
-				
-				}
-			
-			}
-		
-		
-		
-		currentCalls = new ArrayList<CDR>();
-		Date dateToUse = (maxCallEnding > maxCallStarting)?secondEnding:secondStarting;
-		
-		for(CDR cdr : cdrListAscending)
-			{
-			if(secondFormat.format(cdr.getStartTime()).equals(secondFormat.format(dateToUse)))
-				{
-				currentCalls.add(cdr);
-				}
-			}
-		/**
-		 * This second loop is to count calls starting and ending the same second as twice
-		 * So we can get the same call twice in the currentCalls arrayList
+		 * So we can get the same call twice in the calls arrayList
 		 * -> This is the expected behavior
 		 */
-		for(CDR cdr : cdrListAscending)
+		if(callsEnding.size() > callsStarting.size())
 			{
-			if(secondFormat.format(cdr.getEndTime()).equals(secondFormat.format(dateToUse)))
+			String format = dateFormat.format(callsEnding.get(0).getEndTime())+timeFormat.format(callsEnding.get(0).getEndTime());
+			for(CDR cdr : cdrListByStartingTime)//We complement with call starting at the same second
 				{
-				currentCalls.add(cdr);
+				if((dateFormat.format(cdr.getStartTime())+timeFormat.format(cdr.getStartTime())).equals(format))
+					{
+					//Means that we are at the same second (Also the same day, the same hour, the same minute)
+					callsEnding.add(cdr);
+					}
 				}
+			currentCalls = callsEnding;
+			}
+		else
+			{
+			String format = dateFormat.format(callsStarting.get(0).getStartTime())+timeFormat.format(callsStarting.get(0).getStartTime());
+			for(CDR cdr : cdrListByEndingTime)//We complement with call ending at the same second
+				{
+				if((dateFormat.format(cdr.getEndTime())+timeFormat.format(cdr.getEndTime())).equals(format))
+					{
+					//Means that we are at the same second (Also the same day, the same hour, the same minute)
+					callsStarting.add(cdr);
+					}
+				}
+			currentCalls = callsStarting;
 			}
 		
 		Variables.getLogger().debug("Max calls per second found : "+currentCalls.size());
-		Variables.getLogger().info("At "+timeFormat.format(dateToUse)+" , date "+dateFormat.format(dateToUse));
+		Variables.getLogger().info("At "+timeFormat.format(currentCalls.get(0).getStartTime())+" , date "+dateFormat.format(currentCalls.get(0).getStartTime()));
 		for(CDR cdr : currentCalls)
 			{
 			Variables.getLogger().debug(timeFormat.format(cdr.getStartTime())+" to "+timeFormat.format(cdr.getEndTime()));
@@ -527,7 +517,7 @@ public class Action
 		int maxCalls = 0;
 		Date mostCallDay = new Date();
 		
-		for(CDR cdr : cdrListAscending)
+		for(CDR cdr : cdrListByStartingTime)
 			{
 			if(currentCalls.size() == 0)currentCalls.add(cdr);
 			else
@@ -548,6 +538,13 @@ public class Action
 					}
 				}
 			}
+		
+		if((currentCalls.size() == cdrListByStartingTime.size()) && (maxCalls == 0))//Means that there is only one day
+			{
+			maxCalls = currentCalls.size();
+			mostCallDay = currentCalls.get(0).getStartTime();
+			}
+		
 		Variables.getLogger().debug("Max call the same day "+maxCalls+", the "+dateFormat.format(mostCallDay));
 		}
 	
