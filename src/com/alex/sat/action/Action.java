@@ -198,17 +198,18 @@ public class Action
 		Variables.getLogger().debug("We keep only filterd values");
 		ArrayList<CDR> tempList = new ArrayList<CDR>();
 		
-		String filter = "UCCX_";
+		String filter = "AN";
+		Variables.getLogger().debug("Filtering using the following String : "+filter);
 		
 		for(CDR cdr : cdrListByStartingTime)
 			{
 			//tempList.add(cdr);
 			
-			
+			/*
 			if(cdr.getCcmID().contains("2"))
 				{
 				tempList.add(cdr);
-				}
+				}*/
 			
 			/*
 			if(cdr.getCalledNumber().startsWith(filter) || cdr.getCallingNumber().startsWith(filter))
@@ -225,11 +226,11 @@ public class Action
 					//Nothing
 					}
 				}*/
-			/*
+			
 			if(cdr.getCalledName().startsWith(filter) || cdr.getCallingName().startsWith(filter))
 				{
 				tempList.add(cdr);
-				}*/
+				}
 			/*
 			if(cdr.getCalledName().contains("@") || cdr.getCallingName().contains("@"))//Keeps only gateways
 				{
@@ -244,6 +245,11 @@ public class Action
 		System.gc();//Just to be sure
 		Variables.getLogger().info("Filtered !");
 		Variables.getLogger().debug(cdrListByStartingTime.size()+" CDR remaining");
+		if(cdrListByStartingTime.size() == 0)
+			{
+			Variables.getLogger().debug("No CDR remaining after filtering : Exit");
+			System.exit(0);
+			}
 		
 		/*
 		Variables.getLogger().info(cdrList.get(100).getCallingName()+" -> "+cdrList.get(100).getCalledName());
